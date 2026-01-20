@@ -5,7 +5,8 @@ class ServicesManagementScreen extends StatefulWidget {
   const ServicesManagementScreen({super.key});
 
   @override
-  State<ServicesManagementScreen> createState() => _ServicesManagementScreenState();
+  State<ServicesManagementScreen> createState() =>
+      _ServicesManagementScreenState();
 }
 
 class _ServicesManagementScreenState extends State<ServicesManagementScreen> {
@@ -16,27 +17,27 @@ class _ServicesManagementScreenState extends State<ServicesManagementScreen> {
       'category': 'Plumbing',
       'icon': Icons.plumbing,
       'hourlyRate': 450.0,
-      'callOutFee': 150.0,
-      'minimumCharge': 300.0,
+      'callOutFee': 180.0,
+      'minimumCharge': 350.0,
       'isActive': true,
       'isPrimary': true,
     },
     {
       'id': 'srv_002',
-      'name': 'Emergency Plumbing',
-      'category': 'Plumbing',
-      'icon': Icons.emergency,
-      'hourlyRate': 900.0,
-      'callOutFee': 300.0,
-      'minimumCharge': 600.0,
+      'name': 'Electrical Repair',
+      'category': 'Electrical',
+      'icon': Icons.electrical_services,
+      'hourlyRate': 500.0,
+      'callOutFee': 200.0,
+      'minimumCharge': 400.0,
       'isActive': true,
       'isPrimary': false,
     },
     {
       'id': 'srv_003',
-      'name': 'Installation',
+      'name': 'Geyser Installation',
       'category': 'Plumbing',
-      'icon': Icons.construction,
+      'icon': Icons.water_drop,
       'hourlyRate': 550.0,
       'callOutFee': 200.0,
       'minimumCharge': 400.0,
@@ -56,6 +57,123 @@ class _ServicesManagementScreenState extends State<ServicesManagementScreen> {
     },
   ];
 
+  void _handleBack() {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+      return;
+    }
+    // fallback if user navigated here using context.go (no stack)
+    context.go('/provider-dashboard');
+  }
+
+  void _openAddService() {
+    context.push('/add-service');
+  }
+
+  void _openEditService(Map<String, dynamic> service) {
+    context.push('/edit-service', extra: service);
+  }
+
+  void _openEditPricesPicker() {
+    final candidates =
+        _services.where((s) => (s['isActive'] == true)).toList();
+
+    if (candidates.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No active services to edit.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 46,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Row(
+                  children: [
+                    Icon(Icons.edit, size: 18),
+                    SizedBox(width: 8),
+                    Text(
+                      'Select a service to edit prices',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ...candidates.map((s) {
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.grey[100],
+                      foregroundColor: Colors.black,
+                      child: Icon(s['icon'] as IconData),
+                    ),
+                    title: Text(
+                      s['name'],
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    subtitle: Text(
+                      'Hourly: R ${s['hourlyRate'].toStringAsFixed(0)} • Call-out: R ${s['callOutFee'].toStringAsFixed(0)}',
+                      style: TextStyle(color: Colors.grey[700]),
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      _openEditService(s);
+                    },
+                  );
+                }),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showServiceInfo() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('My Services'),
+        content: const Text(
+          'Manage your services, set pricing, and toggle availability. '
+          'Customers will only see active services on your profile.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK', style: TextStyle(color: Colors.black)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -64,12 +182,17 @@ class _ServicesManagementScreenState extends State<ServicesManagementScreen> {
         title: const Text('My Services'),
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
+
+        // ✅ FORCE BACK BUTTON
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: _handleBack,
+        ),
+
         actions: [
           IconButton(
             icon: const Icon(Icons.info_outline),
-            onPressed: () {
-              _showServiceInfo();
-            },
+            onPressed: _showServiceInfo,
           ),
         ],
       ),
@@ -85,9 +208,8 @@ class _ServicesManagementScreenState extends State<ServicesManagementScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          _showAddServiceDialog();
-        },
+        // ✅ OPEN REAL SCREEN
+        onPressed: _openAddService,
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
@@ -95,10 +217,10 @@ class _ServicesManagementScreenState extends State<ServicesManagementScreen> {
       ),
     );
   }
-  
+
   Widget _buildPrimaryServiceCard() {
     final primaryService = _services.firstWhere((s) => s['isPrimary']);
-    
+
     return Container(
       margin: const EdgeInsets.all(20),
       padding: const EdgeInsets.all(20),
@@ -128,13 +250,13 @@ class _ServicesManagementScreenState extends State<ServicesManagementScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Colors.white.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   primaryService['icon'],
-                  size: 28,
-                  color: Colors.black,
+                  color: Colors.white,
+                  size: 24,
                 ),
               ),
               const SizedBox(width: 12),
@@ -142,59 +264,80 @@ class _ServicesManagementScreenState extends State<ServicesManagementScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.amber,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Text(
-                        'PRIMARY SERVICE',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    const Text(
+                      'Primary Service',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white70,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     Text(
                       primaryService['name'],
                       style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
                         color: Colors.white,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
                 ),
               ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.18),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: const Text(
+                  'ACTIVE',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.greenAccent,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: _buildPriceInfo(
-                  'Hourly Rate',
-                  'R${primaryService['hourlyRate'].toStringAsFixed(0)}',
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildPriceInfo(
-                  'Call-out',
-                  'R${primaryService['callOutFee'].toStringAsFixed(0)}',
-                ),
-              ),
+              _buildPriceMini('Hourly', 'R ${primaryService['hourlyRate'].toStringAsFixed(0)}'),
+              _buildPriceMini('Call-out', 'R ${primaryService['callOutFee'].toStringAsFixed(0)}'),
+              _buildPriceMini('Minimum', 'R ${primaryService['minimumCharge'].toStringAsFixed(0)}'),
             ],
           ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: OutlinedButton.icon(
+              // ✅ OPEN REAL EDIT SCREEN
+              onPressed: () => _openEditService(primaryService),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.white,
+                side: BorderSide(color: Colors.white.withOpacity(0.18)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              icon: const Icon(Icons.edit, size: 18),
+              label: const Text(
+                'Edit Primary Service',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+          )
         ],
       ),
     );
   }
-  
-  Widget _buildPriceInfo(String label, String value) {
+
+  Widget _buildPriceMini(String label, String value) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -217,11 +360,12 @@ class _ServicesManagementScreenState extends State<ServicesManagementScreen> {
       ],
     );
   }
-  
+
   Widget _buildServicesList() {
-    final activeServices = _services.where((s) => s['isActive'] && !s['isPrimary']).toList();
+    final activeServices =
+        _services.where((s) => s['isActive'] && !s['isPrimary']).toList();
     final inactiveServices = _services.where((s) => !s['isActive']).toList();
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
@@ -239,9 +383,8 @@ class _ServicesManagementScreenState extends State<ServicesManagementScreen> {
                 ),
               ),
               TextButton.icon(
-                onPressed: () {
-                  // TODO: Navigate to pricing management
-                },
+                // ✅ OPEN PRICES EDIT FLOW
+                onPressed: _openEditPricesPicker,
                 icon: const Icon(Icons.edit, size: 18),
                 label: const Text('Edit Prices'),
                 style: TextButton.styleFrom(
@@ -251,7 +394,7 @@ class _ServicesManagementScreenState extends State<ServicesManagementScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          ...activeServices.map((service) => _buildServiceCard(service)).toList(),
+          ...activeServices.map((service) => _buildServiceCard(service)),
           if (inactiveServices.isNotEmpty) ...[
             const SizedBox(height: 24),
             const Text(
@@ -263,47 +406,39 @@ class _ServicesManagementScreenState extends State<ServicesManagementScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            ...inactiveServices.map((service) => _buildServiceCard(service)).toList(),
+            ...inactiveServices.map((service) => _buildServiceCard(service)),
           ],
         ],
       ),
     );
   }
-  
+
   Widget _buildServiceCard(Map<String, dynamic> service) {
+    final isActive = service['isActive'] as bool;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: service['isActive'] ? Colors.grey[200]! : Colors.grey[300]!,
-        ),
-        boxShadow: [
-          if (service['isActive'])
-            const BoxShadow(
-              color: Color(0x0D000000),
-              blurRadius: 10,
-              offset: Offset(0, 4),
-            ),
+        border: Border.all(color: Colors.grey[200]!),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0D000000),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: service['isActive'] ? Colors.black.withOpacity(0.05) : Colors.grey[200],
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  service['icon'],
-                  size: 24,
-                  color: service['isActive'] ? Colors.black : Colors.grey,
-                ),
+              CircleAvatar(
+                backgroundColor: Colors.grey[100],
+                foregroundColor: Colors.black,
+                child: Icon(service['icon'] as IconData),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -312,17 +447,16 @@ class _ServicesManagementScreenState extends State<ServicesManagementScreen> {
                   children: [
                     Text(
                       service['name'],
-                      style: TextStyle(
-                        fontSize: 16,
+                      style: const TextStyle(
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
-                        color: service['isActive'] ? Colors.black : Colors.grey,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       service['category'],
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         color: Colors.grey[600],
                       ),
                     ),
@@ -330,424 +464,116 @@ class _ServicesManagementScreenState extends State<ServicesManagementScreen> {
                 ),
               ),
               Switch(
-                value: service['isActive'],
-                onChanged: (value) {
+                value: isActive,
+                onChanged: (v) {
                   setState(() {
-                    service['isActive'] = value;
+                    service['isActive'] = v;
                   });
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        value ? 'Service activated' : 'Service deactivated',
-                      ),
-                      backgroundColor: value ? Colors.green : Colors.grey,
-                    ),
-                  );
                 },
-                activeColor: Colors.green,
+                activeColor: Colors.black,
               ),
             ],
           ),
-          if (service['isActive']) ...[
-            const SizedBox(height: 16),
-            const Divider(),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Hourly Rate',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'R${service['hourlyRate'].toStringAsFixed(0)}/hr',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Call-out Fee',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'R${service['callOutFee'].toStringAsFixed(0)}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Minimum',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'R${service['minimumCharge'].toStringAsFixed(0)}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      _showEditServiceDialog(service);
-                    },
-                    icon: const Icon(Icons.edit, size: 18),
-                    label: const Text('Edit'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.black,
-                      side: BorderSide(color: Colors.grey[300]!),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      _showDeleteServiceDialog(service);
-                    },
-                    icon: const Icon(Icons.delete_outline, size: 18),
-                    label: const Text('Delete'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red,
-                      side: const BorderSide(color: Colors.red),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-  
-  void _showServiceInfo() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Service Management'),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('• Your primary service appears prominently to clients'),
-            SizedBox(height: 8),
-            Text('• Active services are visible in search results'),
-            SizedBox(height: 8),
-            Text('• Inactive services are hidden but can be reactivated'),
-            SizedBox(height: 8),
-            Text('• Update your pricing anytime'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Got it', style: TextStyle(color: Colors.black)),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  void _showAddServiceDialog() {
-    final nameController = TextEditingController();
-    final hourlyRateController = TextEditingController();
-    final callOutFeeController = TextEditingController();
-    final minimumChargeController = TextEditingController();
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add New Service'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          const SizedBox(height: 12),
+          Row(
             children: [
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  labelText: 'Service Name',
-                  hintText: 'e.g., Drain Cleaning',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+              Expanded(
+                child: _buildPricePill(
+                    'Hourly', 'R ${service['hourlyRate'].toStringAsFixed(0)}'),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: hourlyRateController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Hourly Rate (R)',
-                  hintText: '450',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildPricePill(
+                    'Call-out', 'R ${service['callOutFee'].toStringAsFixed(0)}'),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: callOutFeeController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Call-out Fee (R)',
-                  hintText: '150',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: minimumChargeController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Minimum Charge (R)',
-                  hintText: '300',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildPricePill(
+                    'Minimum', 'R ${service['minimumCharge'].toStringAsFixed(0)}'),
               ),
             ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.black)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (nameController.text.isNotEmpty &&
-                  hourlyRateController.text.isNotEmpty) {
-                setState(() {
-                  _services.add({
-                    'id': 'srv_new_${DateTime.now().millisecondsSinceEpoch}',
-                    'name': nameController.text,
-                    'category': 'Plumbing',
-                    'icon': Icons.build,
-                    'hourlyRate': double.parse(hourlyRateController.text),
-                    'callOutFee': double.parse(callOutFeeController.text),
-                    'minimumCharge': double.parse(minimumChargeController.text),
-                    'isActive': true,
-                    'isPrimary': false,
-                  });
-                });
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Service added successfully'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Add Service'),
-          ),
-        ],
-      ),
-    );
-    
-    // Dispose controllers when dialog closes
-    nameController.dispose();
-    hourlyRateController.dispose();
-    callOutFeeController.dispose();
-    minimumChargeController.dispose();
-  }
-  
-  void _showEditServiceDialog(Map<String, dynamic> service) {
-    final nameController = TextEditingController(text: service['name']);
-    final hourlyRateController = TextEditingController(text: service['hourlyRate'].toStringAsFixed(0));
-    final callOutFeeController = TextEditingController(text: service['callOutFee'].toStringAsFixed(0));
-    final minimumChargeController = TextEditingController(text: service['minimumCharge'].toStringAsFixed(0));
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Service'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          const SizedBox(height: 12),
+          Row(
             children: [
-              TextField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  labelText: 'Service Name',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  // ✅ OPEN REAL EDIT SCREEN
+                  onPressed: () => _openEditService(service),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.black,
+                    side: BorderSide(color: Colors.grey[300]!),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  icon: const Icon(Icons.edit, size: 18),
+                  label: const Text(
+                    'Edit',
+                    style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: hourlyRateController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Hourly Rate (R)',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          isActive
+                              ? 'Service is active'
+                              : 'Service is inactive',
+                        ),
+                        backgroundColor: isActive ? Colors.green : Colors.orange,
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: callOutFeeController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Call-out Fee (R)',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: minimumChargeController,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  labelText: 'Minimum Charge (R)',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                  icon: const Icon(Icons.visibility, size: 18),
+                  label: const Text(
+                    'Preview',
+                    style: TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),
               ),
             ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.black)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                service['name'] = nameController.text;
-                service['hourlyRate'] = double.parse(hourlyRateController.text);
-                service['callOutFee'] = double.parse(callOutFeeController.text);
-                service['minimumCharge'] = double.parse(minimumChargeController.text);
-              });
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Service updated successfully'),
-                  backgroundColor: Colors.green,
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.black,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Save Changes'),
-          ),
+          )
         ],
       ),
     );
-    
-    // Dispose controllers when dialog closes
-    nameController.dispose();
-    hourlyRateController.dispose();
-    callOutFeeController.dispose();
-    minimumChargeController.dispose();
   }
-  
-  void _showDeleteServiceDialog(Map<String, dynamic> service) {
-    if (service['isPrimary']) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Cannot Delete'),
-          content: const Text('You cannot delete your primary service. Please set another service as primary first.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK', style: TextStyle(color: Colors.black)),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Service'),
-        content: Text('Are you sure you want to delete "${service['name']}"? This action cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.black)),
+
+  Widget _buildPricePill(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(fontSize: 11, color: Colors.grey[600]),
           ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _services.removeWhere((s) => s['id'] == service['id']);
-              });
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Service deleted'),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
             ),
-            child: const Text('Delete'),
           ),
         ],
       ),

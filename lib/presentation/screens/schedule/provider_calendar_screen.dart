@@ -11,7 +11,7 @@ class ProviderCalendarScreen extends StatefulWidget {
 class _ProviderCalendarScreenState extends State<ProviderCalendarScreen> {
   DateTime _selectedDate = DateTime.now();
   String _viewMode = 'Month'; // Month, Week, Day
-  
+
   final Map<DateTime, List<Map<String, dynamic>>> _schedule = {
     DateTime(2026, 1, 17): [
       {
@@ -111,19 +111,26 @@ class _ProviderCalendarScreenState extends State<ProviderCalendarScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          _buildViewModeSelector(),
-          _buildCalendar(),
-          _buildLegend(),
-          Expanded(
-            child: _buildJobsList(),
+
+      // ✅ Whole screen scrolls now
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            children: [
+              _buildViewModeSelector(),
+              _buildCalendar(),
+              _buildLegend(),
+              const SizedBox(height: 8),
+              _buildJobsList(), // ✅ no Expanded inside
+              const SizedBox(height: 24),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
-  
+
   Widget _buildViewModeSelector() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -151,7 +158,7 @@ class _ProviderCalendarScreenState extends State<ProviderCalendarScreen> {
       ),
     );
   }
-  
+
   Widget _buildViewModeChip(String mode) {
     final isSelected = _viewMode == mode;
     return InkWell(
@@ -177,7 +184,7 @@ class _ProviderCalendarScreenState extends State<ProviderCalendarScreen> {
       ),
     );
   }
-  
+
   Widget _buildCalendar() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -238,16 +245,15 @@ class _ProviderCalendarScreenState extends State<ProviderCalendarScreen> {
       ),
     );
   }
-  
+
   Widget _buildCalendarGrid() {
     final firstDayOfMonth = DateTime(_selectedDate.year, _selectedDate.month, 1);
     final lastDayOfMonth = DateTime(_selectedDate.year, _selectedDate.month + 1, 0);
     final daysInMonth = lastDayOfMonth.day;
     final firstWeekday = firstDayOfMonth.weekday;
-    
+
     return Column(
       children: [
-        // Weekday headers
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
@@ -266,7 +272,6 @@ class _ProviderCalendarScreenState extends State<ProviderCalendarScreen> {
               .toList(),
         ),
         const SizedBox(height: 12),
-        // Calendar days
         ...List.generate(6, (weekIndex) {
           return Padding(
             padding: const EdgeInsets.only(bottom: 8),
@@ -277,7 +282,7 @@ class _ProviderCalendarScreenState extends State<ProviderCalendarScreen> {
                 if (dayNumber < 1 || dayNumber > daysInMonth) {
                   return const Expanded(child: SizedBox());
                 }
-                
+
                 final date = DateTime(_selectedDate.year, _selectedDate.month, dayNumber);
                 final hasJobs = _schedule.containsKey(date);
                 final isSelected = date.day == _selectedDate.day &&
@@ -286,7 +291,7 @@ class _ProviderCalendarScreenState extends State<ProviderCalendarScreen> {
                 final isToday = date.day == DateTime.now().day &&
                     date.month == DateTime.now().month &&
                     date.year == DateTime.now().year;
-                
+
                 return Expanded(
                   child: InkWell(
                     onTap: () {
@@ -297,13 +302,9 @@ class _ProviderCalendarScreenState extends State<ProviderCalendarScreen> {
                     child: Container(
                       height: 40,
                       decoration: BoxDecoration(
-                        color: isSelected
-                            ? Colors.black
-                            : (isToday ? Colors.blue[50] : null),
+                        color: isSelected ? Colors.black : (isToday ? Colors.blue[50] : null),
                         borderRadius: BorderRadius.circular(8),
-                        border: isToday && !isSelected
-                            ? Border.all(color: Colors.blue, width: 2)
-                            : null,
+                        border: isToday && !isSelected ? Border.all(color: Colors.blue, width: 2) : null,
                       ),
                       child: Stack(
                         children: [
@@ -313,9 +314,7 @@ class _ProviderCalendarScreenState extends State<ProviderCalendarScreen> {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: isSelected
-                                    ? Colors.white
-                                    : (isToday ? Colors.blue : Colors.black),
+                                color: isSelected ? Colors.white : (isToday ? Colors.blue : Colors.black),
                               ),
                             ),
                           ),
@@ -350,7 +349,7 @@ class _ProviderCalendarScreenState extends State<ProviderCalendarScreen> {
       ],
     );
   }
-  
+
   Widget _buildLegend() {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -369,17 +368,14 @@ class _ProviderCalendarScreenState extends State<ProviderCalendarScreen> {
       ),
     );
   }
-  
+
   Widget _buildLegendItem(String label, Color color) {
     return Row(
       children: [
         Container(
           width: 12,
           height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 6),
         Text(
@@ -393,36 +389,40 @@ class _ProviderCalendarScreenState extends State<ProviderCalendarScreen> {
       ],
     );
   }
-  
+
+  // ✅ Now this is NOT Expanded + ListView scroll inside.
+  // It grows naturally and the WHOLE PAGE scrolls.
   Widget _buildJobsList() {
     if (_selectedDateJobs.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.event_available, size: 60, color: Colors.grey[400]),
-            const SizedBox(height: 16),
-            const Text(
-              'No jobs scheduled',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40),
+        child: Center(
+          child: Column(
+            children: [
+              Icon(Icons.event_available, size: 60, color: Colors.grey[400]),
+              const SizedBox(height: 16),
+              const Text(
+                'No jobs scheduled',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'You have a free day!',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
+              const SizedBox(height: 8),
+              Text(
+                'You have a free day!',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -437,22 +437,24 @@ class _ProviderCalendarScreenState extends State<ProviderCalendarScreen> {
             ),
           ),
         ),
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: _selectedDateJobs.length,
-            itemBuilder: (context, index) {
-              return _buildJobCard(_selectedDateJobs[index]);
-            },
-          ),
+
+        // ✅ Non-scrollable list inside main scroll
+        ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          itemCount: _selectedDateJobs.length,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemBuilder: (context, index) {
+            return _buildJobCard(_selectedDateJobs[index]);
+          },
         ),
       ],
     );
   }
-  
+
   Widget _buildJobCard(Map<String, dynamic> job) {
     final statusColor = job['status'] == 'Upcoming' ? Colors.blue : Colors.orange;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -529,7 +531,7 @@ class _ProviderCalendarScreenState extends State<ProviderCalendarScreen> {
       ),
     );
   }
-  
+
   void _showAddBlockTimeDialog() {
     showDialog(
       context: context,
@@ -548,7 +550,6 @@ class _ProviderCalendarScreenState extends State<ProviderCalendarScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            // Date and time pickers would go here
             const Text('Date and time selection coming soon'),
           ],
         ),
@@ -577,11 +578,21 @@ class _ProviderCalendarScreenState extends State<ProviderCalendarScreen> {
       ),
     );
   }
-  
+
   String _getMonthName(int month) {
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
     ];
     return months[month - 1];
   }

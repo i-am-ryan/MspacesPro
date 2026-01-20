@@ -10,7 +10,7 @@ class JobRequestsScreen extends StatefulWidget {
 
 class _JobRequestsScreenState extends State<JobRequestsScreen> {
   String _selectedFilter = 'All';
-  
+
   final List<Map<String, dynamic>> _requests = [
     {
       'id': 'req_001',
@@ -105,7 +105,7 @@ class _JobRequestsScreenState extends State<JobRequestsScreen> {
       ),
       body: Column(
         children: [
-          _buildFilterTabs(),
+          _buildFilterTabs(), // ✅ fixed (scrollable)
           _buildStatsBar(),
           Expanded(
             child: _buildRequestsList(),
@@ -114,50 +114,58 @@ class _JobRequestsScreenState extends State<JobRequestsScreen> {
       ),
     );
   }
-  
+
+  // -------------------------------------------------------------
+  // ✅ FIXED: scrollable filter chips so "Emergency" never cuts off
+  // -------------------------------------------------------------
   Widget _buildFilterTabs() {
+    final items = ['All', 'Urgent', 'Normal', 'Emergency'];
+
     return Container(
-      padding: const EdgeInsets.all(20),
-      child: Row(
-        children: [
-          _buildFilterTab('All'),
-          const SizedBox(width: 8),
-          _buildFilterTab('Urgent'),
-          const SizedBox(width: 8),
-          _buildFilterTab('Normal'),
-          const SizedBox(width: 8),
-          _buildFilterTab('Emergency'),
-        ],
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        child: Row(
+          children: [
+            for (int i = 0; i < items.length; i++) ...[
+              _buildFilterTab(items[i]),
+              if (i != items.length - 1) const SizedBox(width: 10),
+            ],
+          ],
+        ),
       ),
     );
   }
-  
+
   Widget _buildFilterTab(String label) {
     final isSelected = _selectedFilter == label;
-    final count = label == 'All' 
-        ? _requests.length 
+    final count = label == 'All'
+        ? _requests.length
         : _requests.where((r) => r['urgency'] == label).length;
-    
+
     return InkWell(
+      borderRadius: BorderRadius.circular(22),
       onTap: () {
         setState(() {
           _selectedFilter = label;
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8), // ✅ slightly tighter
         decoration: BoxDecoration(
           color: isSelected ? Colors.black : Colors.grey[200],
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(22),
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min, // ✅ prevents stretching
           children: [
             Text(
               label,
               style: TextStyle(
                 color: isSelected ? Colors.white : Colors.black,
                 fontWeight: FontWeight.w600,
-                fontSize: 14,
+                fontSize: 13,
               ),
             ),
             if (count > 0) ...[
@@ -172,7 +180,7 @@ class _JobRequestsScreenState extends State<JobRequestsScreen> {
                   '$count',
                   style: TextStyle(
                     color: isSelected ? Colors.black : Colors.white,
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -183,11 +191,11 @@ class _JobRequestsScreenState extends State<JobRequestsScreen> {
       ),
     );
   }
-  
+
   Widget _buildStatsBar() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.blue[50],
         borderRadius: BorderRadius.circular(12),
@@ -211,7 +219,7 @@ class _JobRequestsScreenState extends State<JobRequestsScreen> {
       ),
     );
   }
-  
+
   Widget _buildRequestsList() {
     if (_filteredRequests.isEmpty) {
       return Center(
@@ -240,19 +248,19 @@ class _JobRequestsScreenState extends State<JobRequestsScreen> {
         ),
       );
     }
-    
+
     return ListView.builder(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
       itemCount: _filteredRequests.length,
       itemBuilder: (context, index) {
         return _buildRequestCard(_filteredRequests[index]);
       },
     );
   }
-  
+
   Widget _buildRequestCard(Map<String, dynamic> request) {
     final urgencyColor = _getUrgencyColor(request['urgency']);
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -427,7 +435,7 @@ class _JobRequestsScreenState extends State<JobRequestsScreen> {
       ),
     );
   }
-  
+
   Color _getUrgencyColor(String urgency) {
     switch (urgency) {
       case 'Emergency':
@@ -440,7 +448,7 @@ class _JobRequestsScreenState extends State<JobRequestsScreen> {
         return Colors.grey;
     }
   }
-  
+
   void _showDeclineDialog(Map<String, dynamic> request) {
     showDialog(
       context: context,
@@ -477,7 +485,7 @@ class _JobRequestsScreenState extends State<JobRequestsScreen> {
       ),
     );
   }
-  
+
   void _showRequestDetails(Map<String, dynamic> request) {
     showModalBottomSheet(
       context: context,
@@ -562,8 +570,16 @@ class _JobRequestsScreenState extends State<JobRequestsScreen> {
                 const SizedBox(height: 24),
                 _buildDetailSection('Service Type', request['service'], Icons.build),
                 _buildDetailSection('Description', request['description'], Icons.description),
-                _buildDetailSection('Location', '${request['location']} (${request['distance']} away)', Icons.location_on),
-                _buildDetailSection('Preferred Date & Time', '${request['preferredDate']} at ${request['preferredTime']}', Icons.calendar_today),
+                _buildDetailSection(
+                  'Location',
+                  '${request['location']} (${request['distance']} away)',
+                  Icons.location_on,
+                ),
+                _buildDetailSection(
+                  'Preferred Date & Time',
+                  '${request['preferredDate']} at ${request['preferredTime']}',
+                  Icons.calendar_today,
+                ),
                 _buildDetailSection('Posted', request['postedTime'], Icons.access_time),
                 const SizedBox(height: 24),
                 Row(
@@ -613,7 +629,6 @@ class _JobRequestsScreenState extends State<JobRequestsScreen> {
                       child: ElevatedButton.icon(
                         onPressed: () {
                           Navigator.pop(context);
-                          // TODO: Navigate to accept job screen
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Accepting job...'),
@@ -642,7 +657,7 @@ class _JobRequestsScreenState extends State<JobRequestsScreen> {
       ),
     );
   }
-  
+
   Widget _buildDetailSection(String title, String value, IconData icon) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),

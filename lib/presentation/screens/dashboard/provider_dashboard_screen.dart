@@ -9,10 +9,8 @@ class ProviderDashboardScreen extends StatefulWidget {
 }
 
 class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
-  int _selectedIndex = 0;
   bool _isOnline = true;
-  int _currentRequestIndex = 0;
-  
+
   // Mock data
   final Map<String, dynamic> _mockProvider = {
     'businessName': 'John Plumbing Services',
@@ -26,7 +24,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     'responseTime': '15 mins',
     'totalJobs': 234,
   };
-  
+
   final List<Map<String, dynamic>> _mockRequests = [
     {
       'clientName': 'Mary Johnson',
@@ -56,7 +54,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       'time': '30 mins ago',
     },
   ];
-  
+
   final List<Map<String, dynamic>> _todaySchedule = [
     {
       'time': '10:00 AM',
@@ -73,7 +71,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       'status': 'In Progress',
     },
   ];
-  
+
   final List<Map<String, dynamic>> _recentEarnings = [
     {
       'date': 'Jan 15',
@@ -95,36 +93,12 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
     },
   ];
 
-  void _onBottomNavTap(int index) {
-    if (index == 0) {
-      // Already on dashboard
-      return;
-    }
-    
-    setState(() {
-      _selectedIndex = index;
-    });
-    
-    switch (index) {
-      case 1:
-        context.push('/job-requests');
-        break;
-      case 2:
-        context.push('/provider-calendar');
-        break;
-      case 3:
-        context.push('/provider-earnings');
-        break;
-      case 4:
-        // TODO: Navigate to profile
-        break;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+
+      // ✅ IMPORTANT: NO bottomNavigationBar here (ShellRoute provides it)
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -147,7 +121,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                     _buildRecentEarnings(),
                     const SizedBox(height: 24),
                     _buildPerformanceMetrics(),
-                    const SizedBox(height: 80),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
@@ -155,10 +129,9 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(),
     );
   }
-  
+
   Widget _buildHeroSection() {
     return SizedBox(
       height: 200,
@@ -271,15 +244,14 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       ),
     );
   }
-  
+
   Widget _buildStatsCards() {
     return Row(
       children: [
         Expanded(
           child: GestureDetector(
             onTap: () {
-              print('Navigating to active jobs');
-              context.push('/active-jobs');
+              context.go('/active-jobs');
             },
             child: _buildStatCard(
               'Today\'s Jobs',
@@ -293,8 +265,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
         Expanded(
           child: GestureDetector(
             onTap: () {
-              print('Navigating to earnings');
-              context.push('/provider-earnings');
+              context.go('/provider-earnings');
             },
             child: _buildStatCard(
               'Week Earnings',
@@ -307,7 +278,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       ],
     );
   }
-  
+
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -348,7 +319,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       ),
     );
   }
-  
+
   Widget _buildQuickActions() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -369,10 +340,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 'View Requests',
                 Icons.notifications_outlined,
                 '${_mockProvider['pendingRequests']}',
-                () {
-                  print('Navigating to job requests');
-                  context.push('/job-requests');
-                },
+                () => context.go('/job-requests'),
               ),
             ),
             const SizedBox(width: 12),
@@ -381,10 +349,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 'Today\'s Schedule',
                 Icons.calendar_today_outlined,
                 '${_todaySchedule.length}',
-                () {
-                  print('Navigating to calendar');
-                  context.push('/provider-calendar');
-                },
+                () => context.go('/provider-calendar'),
               ),
             ),
           ],
@@ -397,10 +362,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 'Earnings',
                 Icons.attach_money_outlined,
                 null,
-                () {
-                  print('Navigating to earnings');
-                  context.push('/provider-earnings');
-                },
+                () => context.go('/provider-earnings'),
               ),
             ),
             const SizedBox(width: 12),
@@ -409,10 +371,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                 'My Services',
                 Icons.build_outlined,
                 null,
-                () {
-                  print('Navigating to services');
-                  context.push('/services-management');
-                },
+                () => context.go('/services-management'),
               ),
             ),
           ],
@@ -420,8 +379,13 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       ],
     );
   }
-  
-  Widget _buildActionButton(String title, IconData icon, String? badge, VoidCallback onTap) {
+
+  Widget _buildActionButton(
+    String title,
+    IconData icon,
+    String? badge,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -472,7 +436,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       ),
     );
   }
-  
+
   Widget _buildPendingRequests() {
     if (_mockRequests.isEmpty) {
       return Container(
@@ -515,10 +479,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               ),
             ),
             TextButton(
-              onPressed: () {
-                print('Navigating to job requests');
-                context.push('/job-requests');
-              },
+              onPressed: () => context.go('/job-requests'),
               child: const Text(
                 'View All',
                 style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
@@ -527,188 +488,64 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        
-        // SINGLE LARGE BLOCK WITH ARROWS
         SizedBox(
-          height: 260, // Increased height to prevent overflow
-          child: Stack(
-            children: [
-              // Main request card - centered with padding for arrows
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 50),
-                child: _buildLargeRequestCard(_mockRequests[_currentRequestIndex]),
-              ),
-              
-              // Left arrow
-              if (_currentRequestIndex > 0)
-                Positioned(
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  child: Center(
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          setState(() {
-                            _currentRequestIndex--;
-                          });
-                        },
-                        customBorder: const CircleBorder(),
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: const BoxDecoration(
-                            color: Colors.black,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Color(0x4D000000),
-                                blurRadius: 8,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.arrow_back_ios_new,
-                            size: 18,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              
-              // Right arrow
-              if (_currentRequestIndex < _mockRequests.length - 1)
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  bottom: 0,
-                  child: Center(
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () {
-                          setState(() {
-                            _currentRequestIndex++;
-                          });
-                        },
-                        customBorder: const CircleBorder(),
-                        child: Container(
-                          width: 44,
-                          height: 44,
-                          decoration: const BoxDecoration(
-                            color: Colors.black,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Color(0x4D000000),
-                                blurRadius: 8,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.arrow_forward_ios,
-                            size: 18,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-        
-        // Indicator dots
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(
-            _mockRequests.length,
-            (index) => Container(
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: _currentRequestIndex == index ? Colors.black : Colors.grey[300],
-              ),
-            ),
+          height: 230,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: _mockRequests.length,
+            itemBuilder: (context, index) {
+              final request = _mockRequests[index];
+              return _buildRequestCard(request);
+            },
           ),
         ),
       ],
     );
   }
-  
-  Widget _buildLargeRequestCard(Map<String, dynamic> request) {
+
+  Widget _buildRequestCard(Map<String, dynamic> request) {
     Color urgencyColor = Colors.grey;
-    if (request['urgency'] == 'Emergency') {
-      urgencyColor = Colors.red[700]!;
-    } else if (request['urgency'] == 'Urgent') {
+    if (request['urgency'] == 'Urgent') {
       urgencyColor = Colors.orange[700]!;
+    } else if (request['urgency'] == 'Emergency') {
+      urgencyColor = Colors.red[700]!;
     }
-    
+
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      width: 280,
+      height: 220,
+      margin: const EdgeInsets.only(right: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey[200]!, width: 1.5),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0D000000),
-            blurRadius: 10,
-            offset: Offset(0, 4),
+            color: Color(0x0A000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
         children: [
-          // Header row
           Row(
             children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.person, size: 28),
-              ),
-              const SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      request['clientName'],
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      request['time'],
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  request['clientName'],
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: urgencyColor,
                   borderRadius: BorderRadius.circular(6),
@@ -717,96 +554,61 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
                   request['urgency'],
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ],
           ),
-          
-          const SizedBox(height: 16),
-          
-          // Service type
+          const SizedBox(height: 10),
           Row(
             children: [
-              Icon(Icons.build, size: 18, color: Colors.grey[700]),
-              const SizedBox(width: 8),
-              Text(
-                request['service'],
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
+              Icon(Icons.build, size: 16, color: Colors.grey[600]),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  request['service'],
+                  style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          
-          const SizedBox(height: 10),
-          
-          // Location
+          const SizedBox(height: 6),
           Row(
             children: [
-              Icon(Icons.location_on, size: 18, color: Colors.grey[700]),
-              const SizedBox(width: 8),
+              Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
+              const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   '${request['location']} • ${request['distance']}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[700],
-                  ),
+                  style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          
+          const Spacer(),
           const SizedBox(height: 12),
-          
-          // Description
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              request['description'],
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[700],
-                height: 1.4,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Action button
           SizedBox(
             width: double.infinity,
-            height: 48,
             child: ElevatedButton(
-              onPressed: () {
-                print('Navigating to job requests');
-                context.push('/job-requests');
-              },
+              onPressed: () => context.go('/job-requests'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black,
                 foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 10),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 elevation: 0,
               ),
               child: const Text(
                 'View Details',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
               ),
             ),
           ),
@@ -814,7 +616,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       ),
     );
   }
-  
+
   Widget _buildTodaySchedule() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -831,10 +633,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               ),
             ),
             TextButton(
-              onPressed: () {
-                print('Navigating to calendar');
-                context.push('/provider-calendar');
-              },
+              onPressed: () => context.go('/provider-calendar'),
               child: const Text(
                 'View Calendar',
                 style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
@@ -847,10 +646,10 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       ],
     );
   }
-  
+
   Widget _buildScheduleItem(Map<String, dynamic> job) {
     final statusColor = job['status'] == 'Upcoming' ? Colors.blue : Colors.orange;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -917,7 +716,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       ),
     );
   }
-  
+
   Widget _buildRecentEarnings() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -934,10 +733,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
               ),
             ),
             TextButton(
-              onPressed: () {
-                print('Navigating to earnings');
-                context.push('/provider-earnings');
-              },
+              onPressed: () => context.go('/provider-earnings'),
               child: const Text(
                 'View All',
                 style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600),
@@ -950,7 +746,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       ],
     );
   }
-  
+
   Widget _buildEarningItem(Map<String, dynamic> earning) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -1002,7 +798,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       ),
     );
   }
-  
+
   Widget _buildPerformanceMetrics() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1058,7 +854,7 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       ],
     );
   }
-  
+
   Widget _buildMetricCard(String title, String value, IconData icon) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1092,58 +888,6 @@ class _ProviderDashboardScreenState extends State<ProviderDashboardScreen> {
       ),
     );
   }
-  
-  Widget _buildBottomNav() {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.black,
-        boxShadow: [
-          BoxShadow(
-            color: Color(0x1A000000),
-            blurRadius: 10,
-            offset: Offset(0, -4),
-          ),
-        ],
-      ),
-      child: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onBottomNavTap,
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: Colors.black,
-        selectedItemColor: Colors.white,
-        unselectedItemColor: const Color(0x99FFFFFF),
-        selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
-        elevation: 0,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.notifications_outlined),
-            activeIcon: Icon(Icons.notifications),
-            label: 'Requests',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today_outlined),
-            activeIcon: Icon(Icons.calendar_today),
-            label: 'Calendar',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.wallet_outlined),
-            activeIcon: Icon(Icons.wallet),
-            label: 'Earnings',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            activeIcon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class HeroBannerClipper extends CustomClipper<Path> {
@@ -1151,6 +895,7 @@ class HeroBannerClipper extends CustomClipper<Path> {
   Path getClip(Size size) {
     var path = Path();
     path.lineTo(0, size.height - 40);
+
     var firstControlPoint = Offset(size.width / 4, size.height - 10);
     var firstEndPoint = Offset(size.width / 2, size.height - 30);
     path.quadraticBezierTo(
@@ -1159,6 +904,7 @@ class HeroBannerClipper extends CustomClipper<Path> {
       firstEndPoint.dx,
       firstEndPoint.dy,
     );
+
     var secondControlPoint = Offset(size.width * 3 / 4, size.height - 50);
     var secondEndPoint = Offset(size.width, size.height - 30);
     path.quadraticBezierTo(
@@ -1167,6 +913,7 @@ class HeroBannerClipper extends CustomClipper<Path> {
       secondEndPoint.dx,
       secondEndPoint.dy,
     );
+
     path.lineTo(size.width, 0);
     path.close();
     return path;
